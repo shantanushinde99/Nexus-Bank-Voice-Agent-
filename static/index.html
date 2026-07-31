@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Bank AI Agent</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Vapi Web SDK ES Module Loader -->
+  <script type="module">
+    import VapiPkg from 'https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/+esm';
+    window.VapiClass = VapiPkg.default || VapiPkg;
+    window.dispatchEvent(new Event('vapi-sdk-ready'));
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: #07070a;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Main Center Wrapper */
+    .widget-container {
+      position: relative;
+      width: 440px;
+      height: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Large Fluid Animated Petal Orb */
+    .fluid-orb {
+      position: absolute;
+      width: 380px;
+      height: 380px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        #7c3aed 0deg,
+        #a855f7 70deg,
+        #1e1b4b 140deg,
+        #c084fc 210deg,
+        #4c1d95 280deg,
+        #7c3aed 360deg
+      );
+      filter: blur(16px);
+      box-shadow: 0 0 80px rgba(168, 85, 247, 0.4), inset 0 0 40px rgba(124, 58, 237, 0.6);
+      animation: rotate-fluid 12s linear infinite;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Inner Glow Core Overlay */
+    .orb-glow {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(168, 85, 247, 0.6) 0%,
+        rgba(124, 58, 237, 0.3) 50%,
+        transparent 75%
+      );
+      animation: pulse-glow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes rotate-fluid {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.05); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    @keyframes pulse-glow {
+      0% { opacity: 0.5; transform: scale(0.95); }
+      100% { opacity: 0.9; transform: scale(1.08); }
+    }
+
+    /* Active Speaking Animation */
+    .widget-container.speaking .fluid-orb {
+      animation: rotate-fluid 4s linear infinite, beat-speaking 0.5s ease-in-out infinite alternate;
+      filter: blur(10px);
+      box-shadow: 0 0 120px rgba(192, 132, 252, 0.8), 0 0 160px rgba(124, 58, 237, 0.6);
+    }
+
+    .widget-container.listening .fluid-orb {
+      animation: rotate-fluid 8s linear infinite, beat-listening 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes beat-speaking {
+      0% { transform: scale(1.02); }
+      100% { transform: scale(1.18); }
+    }
+
+    @keyframes beat-listening {
+      0% { transform: scale(0.98); }
+      100% { transform: scale(1.06); }
+    }
+
+    /* Center Pill Floating Call Button */
+    .pill-btn {
+      position: relative;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 32px;
+      background: #ffffff;
+      color: #0f172a;
+      border: none;
+      border-radius: 100px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.3);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .pill-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 255, 255, 0.5);
+    }
+
+    .pill-btn:active {
+      transform: scale(0.98);
+    }
+
+    .pill-btn.in-call {
+      background: #0f172a;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    }
+
+    .pill-btn i {
+      font-size: 18px;
+    }
+
+    .pill-btn.in-call i {
+      color: #ef4444;
+    }
+
+    /* Simple Footer Caption */
+    .footer-caption {
+      position: absolute;
+      bottom: 40px;
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Minimalist Visualizer Container -->
+  <div class="widget-container" id="widgetContainer">
+    <!-- Liquid Animated Fluid Orb -->
+    <div class="fluid-orb"></div>
+    <div class="orb-glow"></div>
+
+    <!-- Center Floating Action Pill Button -->
+    <button class="pill-btn" id="callBtn">
+      <i class="fa-solid fa-waveform" id="btnIcon"></i>
+      <span id="btnText">Call AI agent</span>
+    </button>
+  </div>
+
+  <!-- Minimalist Footer Caption -->
+  <div class="footer-caption">
+    Powered by Nexus Financial AI
+  </div>
+
+  <script>
+    // Configuration — loaded from server environment
+    let VAPI_PUBLIC_KEY = "";
+    let ASSISTANT_ID = "";
+
+    // Fetch config from backend (keys stay server-side, never in source code)
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(cfg => {
+        VAPI_PUBLIC_KEY = cfg.vapi_public_key;
+        ASSISTANT_ID = cfg.assistant_id;
+      })
+      .catch(e => console.warn('Config fetch failed, using defaults'));
+
+    const widgetContainer = document.getElementById('widgetContainer');
+    const callBtn = document.getElementById('callBtn');
+    const btnText = document.getElementById('btnText');
+    const btnIcon = document.getElementById('btnIcon');
+
+    let vapi = null;
+    let isCallActive = false;
+
+    function initVapi() {
+      const SDK = window.VapiClass || window.Vapi;
+      if (SDK && !vapi) {
+        try {
+          vapi = new SDK(VAPI_PUBLIC_KEY);
+          setupVapiListeners();
+        } catch (e) {
+          console.error("Vapi constructor error:", e);
+        }
+      }
+    }
+
+    window.addEventListener('vapi-sdk-ready', initVapi);
+    if (window.VapiClass || window.Vapi) initVapi();
+
+    function setupVapiListeners() {
+      if (!vapi) return;
+
+      // Call Started
+      vapi.on('call-start', () => {
+        isCallActive = true;
+        updateUI(true, 'End Call', 'fa-phone-slash', 'listening');
+      });
+
+      // Call Ended
+      vapi.on('call-end', () => {
+        isCallActive = false;
+        updateUI(false, 'Call AI agent', 'fa-waveform', '');
+      });
+
+      // Assistant Started Speaking (Fluid Beating Animation)
+      vapi.on('speech-start', () => {
+        if (!isCallActive) return;
+        widgetContainer.className = 'widget-container speaking';
+      });
+
+      // Assistant Stopped Speaking
+      vapi.on('speech-end', () => {
+        if (!isCallActive) return;
+        widgetContainer.className = 'widget-container listening';
+      });
+
+      // Volume reactivity
+      vapi.on('volume-level', (vol) => {
+        if (isCallActive && vol > 0.04) {
+          const scale = 1 + (vol * 0.35);
+          document.querySelector('.fluid-orb').style.transform = `rotate(45deg) scale(${scale})`;
+        }
+      });
+
+      // Error handler
+      vapi.on('error', (err) => {
+        console.error("Vapi Error:", err);
+        isCallActive = false;
+        updateUI(false, 'Call AI agent', 'fa-waveform', '');
+      });
+    }
+
+    // Toggle Call Button
+    callBtn.addEventListener('click', async () => {
+      if (!vapi) {
+        initVapi();
+      }
+
+      if (!vapi) {
+        alert("Initializing Vapi SDK. Please try again in 1 second.");
+        return;
+      }
+
+      if (!isCallActive) {
+        try {
+          btnText.textContent = 'Connecting...';
+          btnIcon.className = 'fa-solid fa-spinner fa-spin';
+          await vapi.start(ASSISTANT_ID);
+        } catch (err) {
+          console.error("Call start error:", err);
+          updateUI(false, 'Call AI agent', 'fa-waveform', '');
+        }
+      } else {
+        try {
+          vapi.stop();
+        } catch (e) {
+          console.error("Stop error:", e);
+        }
+      }
+    });
+
+    function updateUI(inCall, text, iconClass, orbState) {
+      btnText.textContent = text;
+      btnIcon.className = 'fa-solid ' + iconClass;
+
+      if (inCall) {
+        callBtn.classList.add('in-call');
+      } else {
+        callBtn.classList.remove('in-call');
+      }
+
+      widgetContainer.className = 'widget-container ' + orbState;
+    }
+  </script>
+</body>
+</html>

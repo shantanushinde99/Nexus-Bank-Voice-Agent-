@@ -1,0 +1,3 @@
+@echo off
+echo Starting AI Voice Banking Assistant Backend & Tunnel...
+powershell -ExecutionPolicy Bypass -File "start_all.ps1"
