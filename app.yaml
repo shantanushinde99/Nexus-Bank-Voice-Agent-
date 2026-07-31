@@ -1,0 +1,4 @@
+name: Nexus-Bank-Voice-Agent
+owner: shantanushinde99
+package: .
+kind: wasmer.io/App.v0

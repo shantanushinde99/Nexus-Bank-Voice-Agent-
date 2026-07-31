@@ -201,8 +201,9 @@
       .then(cfg => {
         VAPI_PUBLIC_KEY = cfg.vapi_public_key;
         ASSISTANT_ID = cfg.assistant_id;
+        if (window.VapiClass || window.Vapi) initVapi(); // Init once config is ready
       })
-      .catch(e => console.warn('Config fetch failed, using defaults'));
+      .catch(e => console.warn('Config fetch failed:', e));
 
     const widgetContainer = document.getElementById('widgetContainer');
     const callBtn = document.getElementById('callBtn');
@@ -213,6 +214,7 @@
     let isCallActive = false;
 
     function initVapi() {
+      if (!VAPI_PUBLIC_KEY) return; // Wait for fetch
       const SDK = window.VapiClass || window.Vapi;
       if (SDK && !vapi) {
         try {
@@ -225,7 +227,6 @@
     }
 
     window.addEventListener('vapi-sdk-ready', initVapi);
-    if (window.VapiClass || window.Vapi) initVapi();
 
     function setupVapiListeners() {
       if (!vapi) return;
@@ -276,7 +277,7 @@
         initVapi();
       }
 
-      if (!vapi) {
+      if (!vapi || !ASSISTANT_ID) {
         alert("Initializing Vapi SDK. Please try again in 1 second.");
         return;
       }

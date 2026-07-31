@@ -61,6 +61,29 @@ graph TD
 ## 🧠 Deep Dive: How the System Works
 
 ### 1. How the Agent Operates (Multi-Agent Architecture)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Coordinator
+    participant AuthAgent
+    participant BankAgent
+    
+    User->>Coordinator: "What is my balance?" (Intent: check_balance)
+    Coordinator->>Coordinator: Check Session State (Authenticated?)
+    
+    alt Not Authenticated
+        Coordinator->>AuthAgent: Route to AuthAgent
+        AuthAgent->>User: "Please provide last 4 digits of account and DOB."
+        User->>AuthAgent: "1234, 15 March 1990"
+        AuthAgent->>Coordinator: Verification Success
+        Coordinator->>Coordinator: Update Session State = Authenticated
+    end
+    
+    Coordinator->>BankAgent: Route to BankingAgent (with intent & ID)
+    BankAgent->>User: "Your balance is ₹15,000."
+```
+
 Instead of relying on a single monolithic prompt, this system uses a **Coordinator-Subagent pattern**:
 - **Coordinator Agent**: When a call connects, the Coordinator determines the caller's intent. It tracks session context, handles the conversation state, and routes the request to the appropriate subagent.
 - **Subagents**: Specialized agents handle distinct domains. 
@@ -70,6 +93,22 @@ Instead of relying on a single monolithic prompt, this system uses a **Coordinat
 - **Memory & State**: Once a caller is verified by the Auth Agent, the Coordinator stores this authentication state. Subsequent requests (like transferring funds or checking balances) bypass the security checks seamlessly.
 
 ### 2. How Tool Calling Works
+
+```mermaid
+sequenceDiagram
+    participant Vapi as Vapi Cloud (STT/LLM/TTS)
+    participant API as FastAPI Webhook
+    participant Function as Python Tool Logic
+    
+    Vapi->>Vapi: LLM decides it needs real-time data
+    Vapi->>API: HTTP POST /api/vapi/webhook <br/> JSON: {"message": {"toolCalls": [{"name": "get_balance"}]}}
+    API->>Function: Execute get_balance(customer_id)
+    Function-->>API: Returns: {"balance": 15000, "currency": "INR"}
+    API-->>Vapi: HTTP 200 OK <br/> JSON: {"results": [{"result": "Balance is 15000 INR"}]}
+    Vapi->>Vapi: LLM generates conversational response
+    Vapi-->>User: (Spoken) "You have ₹15,000 in your account."
+```
+
 The AI interacts with the real world using **Function Tool Calling**:
 - **Vapi Integration**: The Vapi AI platform listens to the user and converts speech to text. If the LLM decides it needs real-time data (e.g., checking a balance), it triggers a *Tool Call*.
 - **Webhook Execution**: Vapi sends an HTTP POST request to our FastAPI backend (`/api/vapi/webhook` or specific tool endpoints like `/api/balance/{id}`).
@@ -77,6 +116,16 @@ The AI interacts with the real world using **Function Tool Calling**:
 - **Voice Response**: Vapi feeds the JSON response back to the LLM, which translates the raw data into natural, conversational speech for the caller (e.g., *"Your balance is ₹15,000"*).
 
 ### 3. How Data Fetching Works
+
+```mermaid
+graph LR
+    Tool[Function Execution<br>e.g., block_card] --> Interceptor{Audit Decorator}
+    Interceptor -->|1. Write| AuditLog[(AuditLog Table)]
+    Interceptor -->|2. Continue| Logic[Core Business Logic]
+    Logic <-->|SQLAlchemy ORM| DB[(Supabase PostgreSQL)]
+    DB -.->|Offline Fallback| SQLite[(Local SQLite)]
+```
+
 The system persists data securely and efficiently:
 - **Supabase PostgreSQL**: The primary database hosted in the cloud. It stores structured data like `Customers`, `Accounts`, `Cards`, `Loans`, and `Transactions`.
 - **SQLAlchemy ORM**: We use SQLAlchemy 2.0 to safely map Python objects to database tables, preventing SQL injection and abstracting complex queries.
@@ -150,6 +199,35 @@ docker-compose up --build
 ```
 
 Access Interactive API Documentation at: `http://localhost:8000/docs`
+
+---
+
+## 🌐 Setting Up Ngrok (Local Tunnel)
+
+To connect Vapi to your local environment, you need a public URL that forwards to your localhost. We use **Ngrok** for this.
+
+### 1. Download & Authenticate
+1. Create a free account at [ngrok.com](https://ngrok.com/)
+2. Download the Ngrok executable and place it in the project root folder.
+3. Authenticate your agent (run this once):
+   ```bash
+   .\ngrok.exe config add-authtoken YOUR_NGROK_TOKEN
+   ```
+
+### 2. Claim a Static Domain (Free)
+Ngrok now offers free static domains, which means you don't have to update Vapi every time you restart!
+1. Go to your Ngrok Dashboard -> **Domains**
+2. Click **Create Domain** (e.g., `rental-hardy-exerciser.ngrok-free.dev`)
+
+### 3. Run the Servers (Automated Script)
+We have provided a PowerShell script that simultaneously launches both your FastAPI backend and the Ngrok tunnel using your static domain.
+
+1. Open `start_all.ps1` and ensure the `--domain` matches your claimed static domain.
+2. Run the script in PowerShell:
+   ```powershell
+   .\start_all.ps1
+   ```
+This will give you a permanent Public Webhook URL (e.g., `https://rental-hardy-exerciser.ngrok-free.dev/api/vapi/webhook`).
 
 ---
 
