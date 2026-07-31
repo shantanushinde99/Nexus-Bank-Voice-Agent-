@@ -2,6 +2,7 @@ import math
 from sqlalchemy.orm import Session
 from app.database.models import Customer, Account, Loan
 from app.services.audit import log_audit_event
+from app.services.currency import format_inr_spoken, format_inr_display
 
 
 def calculate_emi(
@@ -40,15 +41,19 @@ def calculate_emi(
     return {
         "success": True,
         "principal": principal,
-        "formatted_principal": f"₹{principal:,.2f}",
+        "display_principal": format_inr_display(principal),
+        "spoken_principal": format_inr_spoken(principal),
         "annual_interest_rate": annual_interest_rate,
         "tenure_months": tenure_months,
         "monthly_emi": round(emi, 2),
-        "formatted_monthly_emi": f"₹{round(emi, 2):,.2f}",
+        "display_monthly_emi": format_inr_display(round(emi, 2)),
+        "spoken_monthly_emi": format_inr_spoken(round(emi, 2)),
         "total_interest_payable": round(total_interest, 2),
-        "formatted_total_interest": f"₹{round(total_interest, 2):,.2f}",
+        "display_total_interest": format_inr_display(round(total_interest, 2)),
+        "spoken_total_interest": format_inr_spoken(round(total_interest, 2)),
         "total_payment": round(total_payment, 2),
-        "formatted_total_payment": f"₹{round(total_payment, 2):,.2f}",
+        "display_total_payment": format_inr_display(round(total_payment, 2)),
+        "spoken_total_payment": format_inr_spoken(round(total_payment, 2)),
     }
 
 
@@ -123,11 +128,14 @@ def check_loan_eligibility(
         "customer_name": customer.full_name,
         "loan_type": loan_type,
         "requested_amount": requested_amount,
-        "formatted_requested_amount": f"₹{requested_amount:,.2f}",
+        "display_requested_amount": format_inr_display(requested_amount),
+        "spoken_requested_amount": format_inr_spoken(requested_amount),
         "max_eligible_amount": round(max_eligible_loan, 2),
-        "formatted_max_eligible_amount": f"₹{round(max_eligible_loan, 2):,.2f}",
+        "display_max_eligible_amount": format_inr_display(round(max_eligible_loan, 2)),
+        "spoken_max_eligible_amount": format_inr_spoken(round(max_eligible_loan, 2)),
         "estimated_monthly_emi": monthly_emi,
-        "formatted_estimated_emi": formatted_monthly_emi,
+        "display_estimated_emi": format_inr_display(monthly_emi),
+        "spoken_estimated_emi": format_inr_spoken(monthly_emi),
         "interest_rate": rate,
         "tenure_months": tenure_months,
         "rejection_reason": rejection_reason,
@@ -177,9 +185,11 @@ def create_loan_request(
         "customer_name": customer.full_name,
         "loan_type": loan_type,
         "amount": amount,
-        "formatted_amount": f"₹{amount:,.2f}",
+        "display_amount": format_inr_display(amount),
+        "spoken_amount": format_inr_spoken(amount),
         "emi": emi_data.get("monthly_emi", 0.0),
-        "formatted_emi": emi_data.get("formatted_monthly_emi", f"₹{emi_data.get('monthly_emi', 0.0):,.2f}"),
+        "display_emi": emi_data.get("display_monthly_emi", format_inr_display(emi_data.get('monthly_emi', 0.0))),
+        "spoken_emi": emi_data.get("spoken_monthly_emi", format_inr_spoken(emi_data.get('monthly_emi', 0.0))),
         "status": "Applied",
-        "message": f"Your application for a {loan_type} of ₹{amount:,.2f} has been submitted successfully. Reference ID: {new_loan.id}",
+        "message": f"Your application for a {loan_type} of {format_inr_spoken(amount)} has been submitted successfully.",
     }

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.database.models import Customer, Account, Transaction, Card
 from app.services.audit import log_audit_event
+from app.services.currency import format_inr_spoken, format_inr_display
 
 
 def get_balance(db: Session, customer_id: str) -> dict:
@@ -15,10 +16,10 @@ def get_balance(db: Session, customer_id: str) -> dict:
         {
             "account_id": acc.id,
             "account_number": f"••••{acc.account_number[-4:]}",
-            "full_account_number": acc.account_number,
             "account_type": acc.account_type,
             "balance": acc.balance,
-            "formatted_balance": f"₹{acc.balance:,.2f}",
+            "display_balance": format_inr_display(acc.balance),
+            "spoken_balance": format_inr_spoken(acc.balance),
             "status": acc.status,
         }
         for acc in accounts
@@ -39,7 +40,8 @@ def get_balance(db: Session, customer_id: str) -> dict:
         "customer_name": customer.full_name,
         "accounts": accounts_data,
         "total_balance": total_balance,
-        "formatted_total_balance": f"₹{total_balance:,.2f}",
+        "display_total_balance": format_inr_display(total_balance),
+        "spoken_total_balance": format_inr_spoken(total_balance),
     }
 
 
@@ -63,7 +65,8 @@ def get_recent_transactions(db: Session, customer_id: str, limit: int = 5) -> di
         {
             "transaction_id": tx.id,
             "amount": tx.amount,
-            "formatted_amount": f"₹{tx.amount:,.2f}",
+            "display_amount": format_inr_display(tx.amount),
+            "spoken_amount": format_inr_spoken(tx.amount),
             "type": tx.transaction_type,
             "merchant": tx.merchant or "N/A",
             "description": tx.description or "",
@@ -100,7 +103,8 @@ def get_account_details(db: Session, customer_id: str) -> dict:
         {
             "account_number": f"••••{acc.account_number[-4:]}",
             "account_type": acc.account_type,
-            "balance": f"₹{acc.balance:,.2f}",
+            "display_balance": format_inr_display(acc.balance),
+            "spoken_balance": format_inr_spoken(acc.balance),
             "status": acc.status,
         }
         for acc in accounts
@@ -124,7 +128,7 @@ def get_account_details(db: Session, customer_id: str) -> dict:
         details="Retrieved customer account profile and cards",
     )
 
-    acc_summary_text = ", ".join([f"{a['account_type']} (ending {a['account_number']}) with balance {a['balance']} [{a['status']}]" for a in accounts_info])
+    acc_summary_text = ", ".join([f"{a['account_type']} (ending {a['account_number']}) with balance {a['spoken_balance']} [{a['status']}]" for a in accounts_info])
     card_summary_text = ", ".join([f"{c['card_type']} ending {c['last_four']} is {c['status']}" for c in cards_info])
 
     return {
