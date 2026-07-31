@@ -168,6 +168,90 @@
       font-weight: 500;
       letter-spacing: 0.2px;
     }
+
+    /* Demo Panels */
+    .demo-card {
+      position: absolute;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      z-index: 20;
+    }
+
+    .demo-card h3 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #a855f7;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .demo-credentials {
+      top: 40px;
+      left: 40px;
+      width: 300px;
+    }
+
+    .demo-credentials p {
+      font-size: 14px;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+
+    .demo-credentials strong {
+      color: #ffffff;
+    }
+
+    .demo-credentials .demo-hint {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #94a3b8;
+      font-style: italic;
+    }
+
+    .tool-logs {
+      bottom: 40px;
+      right: 40px;
+      width: 360px;
+      height: 320px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .log-container {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+    }
+
+    .log-container::-webkit-scrollbar { width: 4px; }
+    .log-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+    .log-entry {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.3);
+      word-break: break-all;
+    }
+
+    .log-entry.system { color: #94a3b8; border-left: 2px solid #64748b; }
+    .log-entry.tool-call { color: #38bdf8; border-left: 2px solid #0ea5e9; }
+    .log-entry.transcript { color: #cbd5e1; border-left: 2px solid #475569; }
+    
+    @media (max-width: 1024px) {
+      .demo-credentials, .tool-logs { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -188,6 +272,32 @@
   <!-- Minimalist Footer Caption -->
   <div class="footer-caption">
     Powered by Nexus Financial AI
+  </div>
+
+  <!-- Demo Credentials Panel -->
+  <div class="demo-card demo-credentials">
+    <h3><i class="fa-solid fa-users"></i> Demo Identities</h3>
+    <div style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+      <p><strong>Aarav Sharma</strong></p>
+      <p>Acct End: 4567 | DOB: 14 Aug 1999</p>
+    </div>
+    <div style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+      <p><strong>Priya Patel</strong></p>
+      <p>Acct End: 6789 | DOB: 22 Mar 1995</p>
+    </div>
+    <div>
+      <p><strong>Rajesh Kumar</strong></p>
+      <p>Acct End: 9011 | DOB: 05 Nov 1988</p>
+    </div>
+    <p class="demo-hint" style="margin-top: 12px;">Speak one of these when AI asks for verification.</p>
+  </div>
+
+  <!-- Live Tool Logs Panel -->
+  <div class="demo-card tool-logs">
+    <h3><i class="fa-solid fa-terminal"></i> Live Tool Logs</h3>
+    <div id="logContainer" class="log-container">
+      <div class="log-entry system">System initialized. Waiting for call...</div>
+    </div>
   </div>
 
   <script>
@@ -268,7 +378,36 @@
         console.error("Vapi Error:", err);
         isCallActive = false;
         updateUI(false, 'Call AI agent', 'fa-waveform', '');
+        addLog(`Error: ${err.message || 'Call failed'}`, 'system');
       });
+
+      // Capture Tool Calls and Transcripts
+      vapi.on('message', (message) => {
+        if (message.type === 'tool-calls') {
+          const toolCalls = message.toolWithToolCallList || message.toolCalls || [];
+          toolCalls.forEach(call => {
+            const func = call.toolCall?.function || call.function;
+            if (func) {
+              const args = typeof func.arguments === 'string' ? func.arguments : JSON.stringify(func.arguments || {});
+              addLog(`⚙️ Executing: ${func.name}(${args})`, 'tool-call');
+            }
+          });
+        }
+        else if (message.type === 'transcript' && message.transcriptType === 'final') {
+          const role = message.role === 'user' ? 'User' : 'AI';
+          addLog(`${role}: "${message.transcript}"`, 'transcript');
+        }
+      });
+    }
+
+    // Logger Utility
+    function addLog(text, type = 'system') {
+      const container = document.getElementById('logContainer');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = text;
+      container.appendChild(entry);
+      container.scrollTop = container.scrollHeight;
     }
 
     // Toggle Call Button
