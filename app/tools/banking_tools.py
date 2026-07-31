@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.database.models import Customer, Account, Transaction
+from app.database.models import Customer, Account, Transaction, Card
 from app.services.audit import log_audit_event
 
 
@@ -106,15 +106,27 @@ def get_account_details(db: Session, customer_id: str) -> dict:
         for acc in accounts
     ]
 
+    cards = db.query(Card).filter(Card.customer_id == customer_id).all()
+    cards_info = [
+        {
+            "card_type": c.card_type,
+            "last_four": c.last_four,
+            "status": c.status,
+        }
+        for c in cards
+    ]
+
     log_audit_event(
         db,
         tool_called="get_account_details",
         status="SUCCESS",
         customer_id=customer_id,
-        details="Retrieved customer account profile",
+        details="Retrieved customer account profile and cards",
     )
 
-    acc_summary_text = ", ".join([f"{a['account_type']} (ending {a['account_number']}) with balance {a['balance']}" for a in accounts_info])
+    acc_summary_text = ", ".join([f"{a['account_type']} (ending {a['account_number']}) with balance {a['balance']} [{a['status']}]" for a in accounts_info])
+    card_summary_text = ", ".join([f"{c['card_type']} ending {c['last_four']} is {c['status']}" for c in cards_info])
+
     return {
         "success": True,
         "customer_id": customer.id,
@@ -122,5 +134,6 @@ def get_account_details(db: Session, customer_id: str) -> dict:
         "phone_number": customer.phone_number,
         "dob": customer.dob,
         "accounts": accounts_info,
-        "summary": f"{customer.full_name} has {len(accounts_info)} active account(s): {acc_summary_text}.",
+        "cards": cards_info,
+        "summary": f"{customer.full_name} has {len(accounts_info)} account(s): {acc_summary_text}. Cards: {card_summary_text}.",
     }
