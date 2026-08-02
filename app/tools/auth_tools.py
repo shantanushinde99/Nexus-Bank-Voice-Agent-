@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database.models import Customer, Account, Session as CallSession
 from app.services.audit import log_audit_event
 from app.services.memory import MemoryManager
+from app.database.seed import hash_pin
 
 
 def normalize_dob(dob_str: str) -> str:
@@ -33,17 +34,23 @@ def verify_customer(
     db: Session,
     account_last_four: str,
     dob: str,
+    pin: str,
+    code_word: str,
     call_id: str | None = None,
 ) -> dict:
     """Verify customer identity by last 4 digits of account number and date of birth."""
     account_last_four = account_last_four.strip()
     normalized_dob = normalize_dob(dob)
+    hashed_pin = hash_pin(pin.strip())
+    hashed_code_word = hash_pin(code_word.strip().lower())
 
-    # Search for customer matching DOB and account ending with account_last_four
+    # Search for customer matching DOB, PIN, code word and account ending with account_last_four
     query = (
         db.query(Customer)
         .join(Account, Account.customer_id == Customer.id)
         .filter((Customer.dob == normalized_dob) | (Customer.dob == dob.strip()))
+        .filter(Customer.pin_hash == hashed_pin)
+        .filter(Customer.code_word_hash == hashed_code_word)
         .filter(Account.account_number.endswith(account_last_four))
     )
     customer = query.first()

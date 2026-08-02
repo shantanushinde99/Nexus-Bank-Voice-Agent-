@@ -134,7 +134,7 @@ class CoordinatorAgent:
         if auth_required and not session.authenticated:
             prompt_msg = (
                 "Before I can access your account, I'll need to verify your identity. "
-                "Please provide the last four digits of your account number and your date of birth."
+                "Please provide the last four digits of your account number, your date of birth, your 4-digit PIN, and your secret code word."
             )
             MemoryManager.log_message(db, session.id, "assistant", prompt_msg)
             return {

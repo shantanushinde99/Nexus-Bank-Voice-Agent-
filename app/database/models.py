@@ -31,6 +31,8 @@ class Customer(Base):
     phone_number = Column(String(20), nullable=False, unique=True)
     dob = Column(String(10), nullable=False)  # Format: YYYY-MM-DD or DD Month YYYY
     pin_hash = Column(String(256), nullable=False)
+    security_question = Column(String(255), nullable=True)
+    code_word_hash = Column(String(256), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
 
     accounts = relationship("Account", back_populates="customer", cascade="all, delete-orphan")

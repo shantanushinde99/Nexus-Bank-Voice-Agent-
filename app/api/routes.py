@@ -51,6 +51,8 @@ def verify_user(payload: VerifyUserRequest, db: Session = Depends(get_db)):
         db=db,
         account_last_four=payload.account_last_four,
         dob=payload.dob,
+        pin=payload.pin,
+        code_word=payload.code_word,
         call_id=payload.call_id,
     )
     return VerifyUserResponse(**res)

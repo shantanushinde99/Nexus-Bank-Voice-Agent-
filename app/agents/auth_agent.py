@@ -11,9 +11,11 @@ class AuthAgent:
         db: Session,
         account_last_four: str,
         dob: str,
+        pin: str,
+        code_word: str,
         call_id: str,
     ) -> dict:
-        result = verify_customer(db, account_last_four, dob, call_id)
+        result = verify_customer(db, account_last_four, dob, pin, code_word, call_id)
 
         if result["success"]:
             return {

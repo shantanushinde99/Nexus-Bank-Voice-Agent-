@@ -5,6 +5,8 @@ from typing import Optional, List
 class VerifyUserRequest(BaseModel):
     account_last_four: str = Field(..., json_schema_extra={"example": "4567"})
     dob: str = Field(..., json_schema_extra={"example": "1999-08-14"})
+    pin: str = Field(..., json_schema_extra={"example": "1234"})
+    code_word: str = Field(..., json_schema_extra={"example": "Fluffy"})
     call_id: Optional[str] = Field(default="demo-call-101")
 
 
