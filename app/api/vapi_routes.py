@@ -62,6 +62,12 @@ async def vapi_webhook(request: Request, db: Session = Depends(get_db)):
                     code_word=str(args.get("code_word", "")),
                     call_id=call_id,
                 )
+            elif func_name == "get_security_question":
+                tool_result = auth_tools.get_security_question(
+                    db,
+                    account_last_four=str(args.get("account_last_four", "")),
+                    dob=str(args.get("dob", "")),
+                )
             elif func_name == "get_balance":
                 tool_result = banking_tools.get_balance(db, customer_id=target_customer_id)
             elif func_name == "get_recent_transactions":

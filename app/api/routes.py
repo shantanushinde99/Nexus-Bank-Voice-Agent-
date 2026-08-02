@@ -37,10 +37,10 @@ def health_check():
 @router.get("/config")
 def get_frontend_config():
     """Serve non-secret frontend config (public key + assistant ID) from env vars."""
-    import os
+    from app.config import settings
     return {
-        "vapi_public_key": os.getenv("VAPI_PUBLIC_KEY", ""),
-        "assistant_id": os.getenv("VAPI_ASSISTANT_ID", ""),
+        "vapi_public_key": settings.VAPI_PUBLIC_KEY,
+        "assistant_id": settings.VAPI_ASSISTANT_ID,
     }
 
 

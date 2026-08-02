@@ -8,20 +8,10 @@
     "dob": {
       "type": "string",
       "description": "The customer's date of birth. Accept any natural spoken format (e.g., '5th November 1988') and do not force them to use a specific date format."
-    },
-    "pin": {
-      "type": "string",
-      "description": "The customer's 4-digit Telephone PIN."
-    },
-    "code_word": {
-      "type": "string",
-      "description": "The customer's secret code word (answer to their security question)."
     }
   },
   "required": [
     "account_last_four",
-    "dob",
-    "pin",
-    "code_word"
+    "dob"
   ]
 }

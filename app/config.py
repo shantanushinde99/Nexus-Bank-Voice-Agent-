@@ -23,8 +23,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./voice_bank.db")
 
     # Vapi Settings
-    VAPI_API_KEY: str = os.getenv("VAPI_API_KEY", "")
-    VAPI_WEBHOOK_SECRET: str = os.getenv("VAPI_WEBHOOK_SECRET", "")
+    VAPI_API_KEY: str = ""
+    VAPI_PUBLIC_KEY: str = ""
+    VAPI_ASSISTANT_ID: str = ""
+    VAPI_WEBHOOK_SECRET: str = ""
 
 
 settings = Settings()
