@@ -63,6 +63,13 @@ def serve_ui():
     }
 
 
+@app.get("/health")
+def root_health_check():
+    """Root level health check endpoint for UptimeRobot and cloud monitors."""
+    return {"status": "healthy", "service": "AI Voice Banking Assistant", "version": "1.0.0"}
+
+
+
 if __name__ == "__main__":
     import uvicorn
 

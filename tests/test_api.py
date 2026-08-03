@@ -14,6 +14,14 @@ def test_health_endpoint():
     assert data["status"] == "healthy"
 
 
+def test_root_health_endpoint():
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+
+
+
 def test_verify_user_endpoint():
     # Test authentication with seeded customer Aarav Sharma (last 4: 4567, DOB: 1999-08-14)
     response = client.post(
