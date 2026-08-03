@@ -63,10 +63,11 @@ def serve_ui():
     }
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def root_health_check():
     """Root level health check endpoint for UptimeRobot and cloud monitors."""
     return {"status": "healthy", "service": "AI Voice Banking Assistant", "version": "1.0.0"}
+
 
 
 

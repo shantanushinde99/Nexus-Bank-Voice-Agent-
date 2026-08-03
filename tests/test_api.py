@@ -13,12 +13,19 @@ def test_health_endpoint():
     data = response.json()
     assert data["status"] == "healthy"
 
+    head_res = client.head("/api/health")
+    assert head_res.status_code == 200
+
 
 def test_root_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
+
+    head_res = client.head("/health")
+    assert head_res.status_code == 200
+
 
 
 

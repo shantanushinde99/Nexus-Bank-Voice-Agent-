@@ -28,10 +28,11 @@ from app.api.schemas import (
 router = APIRouter()
 
 
-@router.get("/health", status_code=status.HTTP_200_OK)
+@router.api_route("/health", methods=["GET", "HEAD"], status_code=status.HTTP_200_OK)
 def health_check():
     """Health check endpoint for Docker & Cloud deployments (Railway / Render)."""
     return {"status": "healthy", "service": "AI Voice Banking Assistant", "version": "1.0.0"}
+
 
 
 @router.get("/config")
